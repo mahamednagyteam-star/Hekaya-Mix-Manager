@@ -15,6 +15,7 @@ android.permissions = INTERNET
 android.allow_backup = False
 android.ndk = 25b
 p4a.branch = master
+p4a.commit = 957a3e5f8c270f7aa648ba185e5a68c1077a798d
 
 [buildozer]
 log_level = 2
