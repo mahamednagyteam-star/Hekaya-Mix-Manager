@@ -2,6 +2,7 @@ import builtins
 import queue
 import sys
 import threading
+import webbrowser
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -99,6 +100,16 @@ class HekayaApp(App):
         root.add_widget(self.extra_input)
         root.add_widget(self.submit_btn)
 
+        links = Label(
+            text="[ref=developer][color=4aa3ff]المطور: @Mando_js[/color][/ref]    [ref=channel][color=4aa3ff]القناة: PyToolsArab[/color][/ref]",
+            markup=True,
+            size_hint_y=None,
+            height=dp(30),
+            halign="center",
+        )
+        links.bind(on_ref_press=self.open_link)
+        root.add_widget(links)
+
         scroll = ScrollView()
         self.log = Label(text="", markup=True, size_hint_y=None, halign="right", valign="top", text_size=(None, None))
         self.log.bind(texture_size=self.log_texture)
@@ -106,6 +117,13 @@ class HekayaApp(App):
         root.add_widget(scroll)
         self.scroll = scroll
         return root
+
+    def open_link(self, _label, ref):
+        urls = {
+            "developer": "https://t.me/Mando_js",
+            "channel": "https://t.me/PyToolsArab",
+        }
+        webbrowser.open(urls[ref])
 
     def field(self, hint, password=False, form=None, disabled=False, input_filter=None):
         w = TextInput(hint_text=hint, password=password, multiline=False, size_hint_y=None, height=dp(40), disabled=disabled, input_filter=input_filter)
