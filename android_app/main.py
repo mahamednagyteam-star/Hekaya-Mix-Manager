@@ -13,10 +13,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 
-import mix_v3
 
 
 BG = (0.035, 0.055, 0.065, 1)
@@ -66,7 +64,6 @@ class HekayaApp(App):
         Window.clearcolor = BG
         Window.softinput_mode = "below_target"
         self.io = MobileIO(self)
-        self.worker = None
         self.original_input = builtins.input
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
@@ -111,25 +108,20 @@ class HekayaApp(App):
 
         form_card = self.panel(orientation="vertical", padding=dp(13), spacing=dp(8))
         form_card.add_widget(self.section_title("بيانات الحساب"))
-        self.login_mode = Spinner(
-            text="الإيميل وكلمة المرور",
-            values=("الإيميل وكلمة المرور", "JWT و Cookie"),
-            size_hint_y=None, height=dp(46),
-            background_normal="", background_color=PANEL_ALT,
-            color=TEXT, font_size=dp(13),
-        )
-        form_card.add_widget(self.login_mode)
-        self.owner_email = self.field("إيميل الأونر", form=form_card)
-        self.owner_password = self.field("كلمة مرور الأونر", password=True, form=form_card)
-        self.owner_jwt = self.field("Owner JWT Token", password=True, form=form_card, disabled=True)
-        self.owner_cookie = self.field("Owner Cookie", password=True, form=form_card, disabled=True)
-        self.owner_number = self.field("رقم الأونر عند استخدام Token", form=form_card, disabled=True)
-        form_card.add_widget(self.section_title("بيانات الفرد والهدف"))
-        self.member_email = self.field("إيميل الفرد", form=form_card)
-        self.member_password = self.field("كلمة مرور الفرد", password=True, form=form_card)
-        self.target = self.field("الرصيد المستهدف للميكسات", form=form_card, input_filter="int")
+        self.owner_email = self.field("البريد الإلكتروني", form=form_card)
+        self.owner_password = self.field("كلمة المرور", password=True, form=form_card)
         body.add_widget(form_card)
-        self.login_mode.bind(text=self.toggle_login_fields)
+
+        info_card = self.panel(orientation="vertical", padding=dp(13), spacing=dp(6))
+        info_card.add_widget(self.section_title("حالة الربط"))
+        info_card.add_widget(Label(
+            text="تسجيل الدخول بالبريد الإلكتروني وكلمة المرور فقط. "
+                 "تشغيل إدارة الحسابات متوقف لحين ربط واجهة رسمية موثقة وآمنة.",
+            color=MUTED, font_size=dp(12), halign="right",
+            valign="middle", size_hint_y=None, height=dp(52),
+            text_size=(Window.width - dp(64), None),
+        ))
+        body.add_widget(info_card)
 
         actions = self.panel(orientation="vertical", padding=dp(13), spacing=dp(8))
         actions.add_widget(self.section_title("التحكم في الجلسة"))
@@ -229,13 +221,6 @@ class HekayaApp(App):
         }
         webbrowser.open(urls[ref])
 
-    def toggle_login_fields(self, *_):
-        token = self.login_mode.text == "JWT و Cookie"
-        for widget in (self.owner_email, self.owner_password):
-            widget.disabled = token
-        for widget in (self.owner_jwt, self.owner_cookie, self.owner_number):
-            widget.disabled = not token
-
     def log_texture(self, *_):
         if self.log.parent:
             self.log.text_size = (self.log.parent.width - dp(12), None)
@@ -258,47 +243,17 @@ class HekayaApp(App):
             self.scroll.scroll_y = 0
         Clock.schedule_once(update, 0)
 
-    def values(self):
-        if self.login_mode.text == "JWT و Cookie":
-            return ["2", self.owner_jwt.text.strip(), self.owner_cookie.text.strip(), self.owner_number.text.strip(), self.member_email.text.strip(), self.member_password.text, self.target.text.strip()]
-        return ["1", self.owner_email.text.strip(), self.owner_password.text, self.member_email.text.strip(), self.member_password.text, self.target.text.strip()]
-
     def start_run(self, *_):
-        if self.worker and self.worker.is_alive():
+        if not self.owner_email.text.strip() or not self.owner_password.text:
+            self.add_log("أدخل البريد الإلكتروني وكلمة المرور أولاً.", "prompt")
             return
-        values = self.values()
-        if self.login_mode.text == "JWT و Cookie":
-            if not all(values[1:]):
-                return self.add_log("يرجى إكمال بيانات JWT وCookie ورقم الأونر والفرد والهدف.", "prompt")
-        elif not all(values[1:]):
-            return self.add_log("يرجى إكمال بيانات الأونر والفرد والهدف.", "prompt")
-        self.start_btn.disabled = True
-        self.pause_btn.disabled = False
-        self.resume_btn.disabled = True
-        self.submit_btn.disabled = True
-        self.state.text = "● قيد التشغيل"
-        self.state.color = GREEN
-        self.worker = threading.Thread(target=self.run_script, args=(values,), daemon=True)
-        self.worker.start()
-
-    def run_script(self, values):
-        try:
-            builtins.input = self.io.input
-            sys.stdout = LogWriter(self, self.original_stdout)
-            sys.stderr = LogWriter(self, self.original_stderr)
-            for value in values:
-                self.io.submit(value)
-            mix_v3.main()
-        except Exception as exc:
-            self.add_log(f"خطأ: {type(exc).__name__}: {exc}", "prompt")
-        finally:
-            builtins.input = self.original_input
-            sys.stdout = self.original_stdout
-            sys.stderr = self.original_stderr
-            Clock.schedule_once(self.finished, 0)
+        self.add_log(
+            "لم يتم تشغيل أي عملية على الحساب. يلزم ربط تسجيل الدخول بواجهة رسمية موثقة من مزود الخدمة.",
+            "prompt",
+        )
 
     def finished(self, *_):
-        self.state.text = "● انتهى"
+        self.state.text = "● جاهز"
         self.state.color = MUTED
         self.start_btn.disabled = False
         self.pause_btn.disabled = True
@@ -306,30 +261,16 @@ class HekayaApp(App):
         self.submit_btn.disabled = True
 
     def submit_extra(self, *_):
-        value = self.extra_input.text.strip()
-        if value:
-            self.io.submit(value)
-            self.extra_input.text = ""
-            self.submit_btn.disabled = True
+        self.add_log("الإدخال التفاعلي غير متاح قبل تفعيل الربط الرسمي.", "prompt")
 
     def pause_run(self, *_):
-        mix_v3.pause_controller.request_pause()
-        self.pause_btn.disabled = True
-        self.resume_btn.disabled = False
-        self.state.text = "● متوقف مؤقتاً"
-        self.state.color = (0.95, 0.68, 0.25, 1)
+        self.add_log("لا توجد جلسة تشغيل نشطة.", "prompt")
 
     def resume_run(self, *_):
-        mix_v3.pause_controller.request_resume()
-        self.pause_btn.disabled = False
-        self.resume_btn.disabled = True
-        self.state.text = "● قيد التشغيل"
-        self.state.color = GREEN
+        self.add_log("لا توجد جلسة تشغيل نشطة.", "prompt")
 
     def on_stop(self):
-        builtins.input = self.original_input
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
+        pass
 
 
 if __name__ == "__main__":
