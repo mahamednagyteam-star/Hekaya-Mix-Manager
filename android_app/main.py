@@ -181,7 +181,8 @@ class HekayaApp(App):
         return root
 
     def panel(self, **kwargs):
-        box = BoxLayout(**kwargs)
+        box = BoxLayout(size_hint_y=None, **kwargs)
+        box.bind(minimum_height=box.setter("height"))
         with box.canvas.before:
             Color(*PANEL)
             box._panel_bg = RoundedRectangle(pos=box.pos, size=box.size, radius=[dp(13)])
@@ -247,6 +248,7 @@ class HekayaApp(App):
             if self.log.text.startswith("[color=71847F]"):
                 self.log.text = ""
             if kind == "prompt":
+                self.submit_btn.disabled = False
                 line = f"[color=35D69A]› {clean}[/color]"
             else:
                 line = f"[color=CBD8D3]{clean}[/color]"
