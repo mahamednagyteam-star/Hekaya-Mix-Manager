@@ -1,0 +1,6 @@
+requests>=2.31,<3
+colorama>=0.4.6,<1
+arabic-reshaper>=3.0,<4
+python-bidi>=0.4.2,<1
+keyboard>=0.13.5,<1
+pyinstaller>=6.0,<7

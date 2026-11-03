@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hekaya-mix-manager"
+version = "3.0.0"
+description = "ETISALAT Hekaya automatic mix stacker"
+requires-python = ">=3.9"
+dependencies = [
+  "requests>=2.31,<3",
+  "colorama>=0.4.6,<1",
+  "arabic-reshaper>=3.0,<4",
+  "python-bidi>=0.4.2,<1",
+  "keyboard>=0.13.5,<1",
+]
+
+[project.scripts]
+hekaya-mix-manager = "mix_v3:main"
