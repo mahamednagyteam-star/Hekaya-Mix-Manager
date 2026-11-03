@@ -1,3 +1,13 @@
+.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.spec.bak
+build/
+dist/
+*.egg-info/
+mix_v3_progress*.json
+.DS_Store
 
 # Android/Buildozer
 android_app/.buildozer/
